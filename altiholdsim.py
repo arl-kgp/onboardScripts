@@ -70,10 +70,11 @@ def arm_and_takeoff(aTargetAltitude):
                 exit()
              
         except KeyboardInterrupt:
-            vehicle.mode = VehicleMode("LAND")            
-            if _land:
-                vehicle.channels.overrides['3']=1000
-                exit()
+            vehicle.channels.overrides['3']=1000
+           # vehicle.mode = VehicleMode("LAND")            
+           # if _land:
+            #    vehicle.channels.overrides['3']=1000
+            #    exit()
             _land = True
 
 #Set up option parsing to get connection string

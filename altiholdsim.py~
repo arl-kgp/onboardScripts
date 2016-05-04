@@ -53,11 +53,11 @@ def arm_and_takeoff(aTargetAltitude):
                 if abs(errorz)>=setz*0.0001: 
                    PID = kp*errorz + ki*sum_error + kd*(errorz - prev_error)
                    print "check:", PID
-                   PID = PID + Thrustmin
-                   if PID<Thrustmin :
-                     PID = Thrustmin
-                   if PID>Thrustmax :
-                     PID = Thrustmax
+                   PID = PID + 1900
+                   if PID<1900 :
+                     PID = 1600
+                   if PID>2000 :
+                     PID = 2000
                    print "PID:", PID 
                    vehicle.channels.overrides['3']  = PID
                    sum_error = sum_error + errorz
@@ -111,10 +111,6 @@ print "Give Kp Ki Kd"
 kp = float(input())
 ki = float(input())
 kd = float(input())
-print "Give max and min thrusts"
-Thrustmax = float(input())
-Thrustmin = float(input())
-print "kp=",kp,"ki=",ki,"kd=",kd,"max thrust=",Thrustmax,"min thrust=",Thruistmin
 
 print _land
 

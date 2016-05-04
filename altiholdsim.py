@@ -55,7 +55,7 @@ def arm_and_takeoff(aTargetAltitude):
                    print "check:", PID
                    PID = PID + Thrustmin
                    if PID<Thrustmin :
-                     PID = Thrustmin
+                     PID = 1350
                    if PID>Thrustmax :
                      PID = Thrustmax
                    print "PID:", PID 
@@ -100,12 +100,13 @@ if not args.connect:
     
 '''
 
-connection_string = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__Arduino_Mega_2560_740313032373515082D1-if00' #for serial
+#connection_string = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__Arduino_Mega_2560_740313032373515082D1-if00' #for serial
+connection_string = 'udp:127.0.0.1:14549'
 
 # Connect to the Vehicle
 print 'Connecting to vehicle on: %s' % connection_string
-#vehicle = connect(connection_string, wait_ready=True)   #for tcp
-vehicle = connect(connection_string, baud=115200, wait_ready=True)   #for serial
+vehicle = connect(connection_string, wait_ready=True)   #for udp
+#vehicle = connect(connection_string, baud=115200, wait_ready=True)   #for serial
 
 print "Give Kp Ki Kd" 
 kp = float(input())
@@ -114,7 +115,7 @@ kd = float(input())
 print "Give max and min thrusts"
 Thrustmax = float(input())
 Thrustmin = float(input())
-print "kp=",kp,"ki=",ki,"kd=",kd,"max thrust=",Thrustmax,"min thrust=",Thruistmin
+print "kp=",kp,"ki=",ki,"kd=",kd,"max thrust=",Thrustmax,"min thrust=",Thrustmin
 
 print _land
 

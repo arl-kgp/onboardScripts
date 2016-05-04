@@ -7,7 +7,7 @@ _land = False
 
 def arm_and_takeoff(aTargetAltitude):
     global _land
-    print kp
+   # print kp
     """
     Arms vehicle and fly to aTargetAltitude.
     """
@@ -39,12 +39,12 @@ def arm_and_takeoff(aTargetAltitude):
 
         try:
             if _land==False:          
-                setz = 10
+                setz = aTargetAltitude
                 currentz = vehicle.location.global_relative_frame.alt
                 PID = 0
                 sum_error = 0
                 prev_error = 0
-                errorz = (setz - currentz)*10
+                errorz = (setz - currentz)*50
                 
                 print " Altitude: ", currentz , "errorz:", errorz
                 print()
@@ -53,9 +53,9 @@ def arm_and_takeoff(aTargetAltitude):
                 if abs(errorz)>=setz*0.0001: 
                    PID = kp*errorz + ki*sum_error + kd*(errorz - prev_error)
                    print "check:", PID
-                   PID = PID + 1380
-                   if PID<1380 :
-                     PID = 1350
+                   PID = PID + 1900
+                   if PID<1900 :
+                     PID = 1600
                    if PID>2000 :
                      PID = 2000
                    print "PID:", PID 
@@ -66,11 +66,11 @@ def arm_and_takeoff(aTargetAltitude):
                     break"""
                 time.sleep(1)
             else:
-                vehicle.channels.overrides['3']=1000
+                vehicle.channels.overrides['3']=0
                 exit()
              
         except KeyboardInterrupt:
-            vehicle.channels.overrides['3']=1000
+            vehicle.channels.overrides['3']=0
            # vehicle.mode = VehicleMode("LAND")            
            # if _land:
             #    vehicle.channels.overrides['3']=1000
@@ -87,6 +87,7 @@ args = parser.parse_args()
 connection_string = args.connect
 sitl = None
 
+'''
 #Start SITL if no connection string specified
 if not args.connect:
     print "Starting copter simulator (SITL)"
@@ -96,8 +97,10 @@ if not args.connect:
     sitl_args = ['-I0', '--model', 'quad', '--home=-35.363261,149.165230,584,353']
     sitl.launch(sitl_args, await_ready=True, restart=True)
     #connection_string = 'tcp:127.0.0.1:5760'   #for tcp
-    connection_string = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__Arduino_Mega_2560_740313032373515082D1-if00' #for serial
+    
+'''
 
+connection_string = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__Arduino_Mega_2560_740313032373515082D1-if00' #for serial
 
 # Connect to the Vehicle
 print 'Connecting to vehicle on: %s' % connection_string

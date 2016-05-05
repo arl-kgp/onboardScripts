@@ -63,7 +63,7 @@ def arm_and_takeoff(aTargetAltitude):
                 
                 time.sleep(1)
             else:
-                print "hi"
+                print "Setting throttle zero"
                 vehicle.channels.overrides['3']=0
                 exit()
              
@@ -95,7 +95,7 @@ vehicle = connect(connection_string, wait_ready=True)   #for udp
 #vehicle = connect(connection_string, baud=115200, wait_ready=True)   #for serial
 print _land
 
-arm_and_takeoff(1)
+arm_and_takeoff(1.5)
 
 
 

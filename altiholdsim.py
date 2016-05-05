@@ -5,6 +5,8 @@ import argparse
 
 _land = False
 
+#kp=0.3,ki=0.01,kd=0.2
+
 def arm_and_takeoff(aTargetAltitude):
     global _land
    # print kp
@@ -53,9 +55,9 @@ def arm_and_takeoff(aTargetAltitude):
                 if abs(errorz)>=setz*0.0001: 
                    PID = kp*errorz + ki*sum_error + kd*(errorz - prev_error)
                    print "check:", PID
-                   PID = PID + Thrustmin
-                   if PID<Thrustmin :
-                     PID = 1350
+                   PID = PID + Thrusthover
+                   if PID<Thrustmin:
+                     PID = Thrustmin
                    if PID>Thrustmax :
                      PID = Thrustmax
                    print "PID:", PID 
@@ -87,18 +89,6 @@ args = parser.parse_args()
 connection_string = args.connect
 sitl = None
 
-'''
-#Start SITL if no connection string specified
-if not args.connect:
-    print "Starting copter simulator (SITL)"
-    from dronekit_sitl import SITL
-    sitl = SITL()
-    sitl.download('copter', '3.3', verbose=True)
-    sitl_args = ['-I0', '--model', 'quad', '--home=-35.363261,149.165230,584,353']
-    sitl.launch(sitl_args, await_ready=True, restart=True)
-    #connection_string = 'tcp:127.0.0.1:5760'   #for tcp
-    
-'''
 
 #connection_string = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__Arduino_Mega_2560_740313032373515082D1-if00' #for serial
 connection_string = 'udp:127.0.0.1:14549'
@@ -112,37 +102,18 @@ print "Give Kp Ki Kd"
 kp = float(input())
 ki = float(input())
 kd = float(input())
-print "Give max and min thrusts"
+print "Give max and hover and min thrusts"
 Thrustmax = float(input())
+Thrusthover = float(input())
 Thrustmin = float(input())
-print "kp=",kp,"ki=",ki,"kd=",kd,"max thrust=",Thrustmax,"min thrust=",Thrustmin
+print "kp=",kp,"ki=",ki,"kd=",kd,"max thrust=",Thrustmax,"hover thrust=",Thrusthover,"min thrust=",Thrustmin
 
 print _land
 
 arm_and_takeoff(1)
 
 
-"""
-print "Set default/target airspeed to 3"
-vehicle.airspeed = 3
 
-print "Going towards first point for 30 seconds ..."
-point1 = LocationGlobalRelative(-35.361354, 149.165218, 20)
-vehicle.simple_goto(point1)
-
-# sleep so we can see the change in map
-time.sleep(30)
-
-print "Going towards second point for 30 seconds (groundspeed set to 10 m/s) ..."
-point2 = LocationGlobalRelative(-35.363244, 149.168801, 20)
-vehicle.simple_goto(point2, groundspeed=10)
-
-# sleep so we can see the change in map
-time.sleep(30)
-
-print "Returning to Launch"
-vehicle.mode = VehicleMode("RTL")
-"""
 #Close vehicle object before exiting script
 print "Close vehicle object"
 vehicle.close()

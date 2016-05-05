@@ -23,13 +23,13 @@ def arm_and_takeoff(aTargetAltitude):
         
     print "Arming motors"
     # Copter should arm in GUIDED mode
-    vehicle.mode = VehicleMode("STABILIZE")
+    vehicle.mode = VehicleMode("ALT_HOLD")
     vehicle.armed=True 
     # Confirm vehicle armed before attempting to take off
     while not vehicle.armed:      
         print " Waiting for arming..."
         time.sleep(1)
-
+   
     print "Taking off!"
     
    # vehicle.mode = VehicleMode("STABILIZE")
@@ -46,28 +46,24 @@ def arm_and_takeoff(aTargetAltitude):
                 PID = 0
                 sum_error = 0
                 prev_error = 0
-                errorz = (setz - currentz)*50
-                
-                print " Altitude: ", currentz , "errorz:", errorz
-                print()
+                errorz = setz - currentz
                 vehicle.armed=True 
                 #Break and return from function just below target altitude.        
-                if abs(errorz)>=setz*0.0001: 
-                   PID = kp*errorz + ki*sum_error + kd*(errorz - prev_error)
-                   print "check:", PID
-                   PID = PID + Thrusthover
-                   if PID<Thrustmin:
-                     PID = Thrustmin
-                   if PID>Thrustmax :
-                     PID = Thrustmax
-                   print "PID:", PID 
-                   vehicle.channels.overrides['3']  = PID
-                   sum_error = sum_error + errorz
-                   prev_error = errorz
-                   """ print "Reached target altitude"
-                    break"""
+                if abs(errorz)>setz*0.1:
+                    if errorz<0 :
+                        vehicle.channels.overrides['3'] = 1340
+                    elif errorz>0 :
+                        vehicle.channels.overrides['3'] = 1660
+                else:
+                    vehicle.channels.overrides['3'] = 1500
+                    print "Reached target altitude"
+                print " Altitude: ", currentz , "errorz:", errorz,"setz",setz
+                print "throttle",vehicle.channels['3']
+               
+                
                 time.sleep(1)
             else:
+                print "hi"
                 vehicle.channels.overrides['3']=0
                 exit()
              
@@ -97,17 +93,6 @@ connection_string = 'udp:127.0.0.1:14549'
 print 'Connecting to vehicle on: %s' % connection_string
 vehicle = connect(connection_string, wait_ready=True)   #for udp
 #vehicle = connect(connection_string, baud=115200, wait_ready=True)   #for serial
-
-print "Give Kp Ki Kd" 
-kp = float(input())
-ki = float(input())
-kd = float(input())
-print "Give max and hover and min thrusts"
-Thrustmax = float(input())
-Thrusthover = float(input())
-Thrustmin = float(input())
-print "kp=",kp,"ki=",ki,"kd=",kd,"max thrust=",Thrustmax,"hover thrust=",Thrusthover,"min thrust=",Thrustmin
-
 print _land
 
 arm_and_takeoff(1)

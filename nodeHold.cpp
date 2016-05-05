@@ -13,6 +13,37 @@
 using namespace cv;
 using namespace std;
 
+
+// Global frame information
+int fx,fy = 0;
+
+//Threshold Params
+int group_degrees = 45;
+int group_distance = 94;
+
+void arrange_points(Point *pt1, Point *pt2)
+  {
+        int p1 = 0;
+        int p2 = 0;
+
+        if(pt1->x == 0) p1 = 1;
+        if(pt1->x == fx) p1 = 3;
+        if(pt2->x == 0) p2 = 1;
+        if(pt2->x == fx) p2 = 3;
+
+        if(pt1->y == 0) p1 = 2;
+        if(pt1->y == fy) p1 = 4;
+        if(pt2->y == 0) p2 = 2;
+        if(pt2->y == fy) p2 = 4;
+
+        if(p1>p2)
+        {
+            Point x = *pt2;
+            *pt2 = *pt1;
+            *pt1 = x;
+        }
+  }
+
 //Function to find line points
 void line_points(Vec2f line, Point *pt1, Point *pt2)
 {
@@ -90,6 +121,8 @@ int main()
     while (1)
     {
         cap >> pic;
+        fx = pic.cols;
+        fy = pic.rows;
         cvtColor(pic, img, CV_BGR2YUV);
         //imshow("original", pic);
         inRange(img, Scalar(99, 132, 81), Scalar(162, 164, 109), pic_bin);

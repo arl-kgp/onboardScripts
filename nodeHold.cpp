@@ -81,7 +81,7 @@ void line_points(Vec2f line, Point *pt1, Point *pt2)
         pt2->y = pt1->y + ( Slope*(float)(pt2->x-pt1->x) );
     }
 
-    if(pt2->y > fy) 
+       if(pt2->y > fy) 
     {           
         pt2->y = fy;
         pt2->x = pt1->x + ( (float)(pt2->y-pt1->y)/Slope );
@@ -98,7 +98,7 @@ void line_points(Vec2f line, Point *pt1, Point *pt2)
         pt1->y = 0;
         pt1->x = pt2->x - ( (float)(pt2->y-pt1->y)/Slope );
 
- }
+    }
 
     if(pt1->y > fy) 
     {           
@@ -114,7 +114,7 @@ void line_points(Vec2f line, Point *pt1, Point *pt2)
 int main()
 {
     Mat pic, img, pic_bin;
-  Mat rslt(pic.rows, pic.cols, CV_8UC3, Scalar(10,10,10));
+    Mat rslt(pic.rows, pic.cols, CV_8UC3, Scalar(10,10,10));
     VideoCapture cap("out1.AVI");
     namedWindow("Control");    
 

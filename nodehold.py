@@ -40,13 +40,16 @@ def arm_and_takeoff(aTargetAltitude):
     while True:
 
         try:
-            if _land==False:          
-                setz = aTargetAltitude
+            if _land==False:       
+                setz = aTargetAltitude   
+                setxvel = 1
                 currentz = vehicle.location.global_relative_frame.alt
+                x =vehicle.velocity[0]
                 PID = 0
-                sum_error = 0
-                prev_error = 0
                 errorz = setz - currentz
+                sum_errorx = 0
+                prev_errorx = 0
+                errorx = setx - x
                 vehicle.armed=True 
                 #Break and return from function just below target altitude.        
                 if abs(errorz)>setz*0.1:
@@ -59,11 +62,14 @@ def arm_and_takeoff(aTargetAltitude):
                     print "Reached target altitude"
                 print " Altitude: ", currentz , "errorz:", errorz,"setz",setz
                 print "throttle",vehicle.channels['3']
-               
-                
+                PID = kpx*errorx + kix*sum_errorx + kdx*prev_errorx
+                vehicle.channels.overrides['1'] = PID*100 + 1500  
+                sum_errorx + sum_errorx + errorx
+                prev_errorx = errorx
+                print "xvel",vehicle.velocity[0],"xthrottle",vehicle.channels.overrides['1']   
                 time.sleep(1)
             else:
-                print "Setting throttle zero"
+                print "hi"
                 vehicle.channels.overrides['3']=0
                 exit()
              
@@ -93,9 +99,13 @@ connection_string = 'udp:127.0.0.1:14549'
 print 'Connecting to vehicle on: %s' % connection_string
 vehicle = connect(connection_string, wait_ready=True)   #for udp
 #vehicle = connect(connection_string, baud=115200, wait_ready=True)   #for serial
+print "kp,ki,kd xvel"
+kpx = float(input())
+kix = float(input())
+kdx = float(input())
 print _land
 
-arm_and_takeoff(1.5)
+arm_and_takeoff(1)
 
 
 

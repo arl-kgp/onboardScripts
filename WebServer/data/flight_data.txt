@@ -1,0 +1,8 @@
+{ 
+  "roll": "0",
+  "pitch": "0",
+  "heading": "150",
+  "vario": "100",
+  "speed": "160",
+  "altitude": "3000"
+}

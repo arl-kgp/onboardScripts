@@ -1,0 +1,3 @@
+[submodule "jQuery-Flight-Indicators"]
+    path = WebServer/jQuery-Flight-Indicators
+    url = https://github.com/ManashRaja/jQuery-Flight-Indicators.git

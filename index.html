@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Welcome to ARK-Online</title>
+  <link rel="stylesheet" type="text/css" href="jQuery-Flight-Indicators/css/flightindicators.css" />
+</head>
+    <script type='text/javascript' src="jQuery-Flight-Indicators/js/jquery.min.js"></script>
+    <script type='text/javascript' src="jQuery-Flight-Indicators/js/jquery.flightindicators.min.js"></script>
+    <script type='text/javascript'>
+        var options = {
+            size : 200,             // Sets the size in pixels of the indicator (square)
+            roll : 0,               // Roll angle in degrees for an attitude indicator
+            pitch : 0,              // Pitch angle in degrees for an attitude indicator
+            heading: 0,             // Heading angle in degrees for an heading indicator
+            vario: 0,               // Variometer in 1000 feets/min for the variometer indicator
+            airspeed: 0,            // Air speed in knots for an air speed indicator
+            altitude: 0,            // Altitude in feets for an altimeter indicator
+            pressure: 1000,         // Pressure in hPa for an altimeter indicator
+            showBox : true,         // Sets if the outer squared box is visible or not (true or false)
+            img_directory : 'jQuery-Flight-Indicators/img/'  // The directory where the images are saved to
+        }
+        $(document).ready(function(){
+            var delay = 2000;
+            var attitude = $.flightIndicator('#attitude', 'attitude', options);
+            var heading = $.flightIndicator('#heading', 'heading', options);
+            var variometer = $.flightIndicator('#variometer', 'variometer', options);
+            var airspeed = $.flightIndicator('#airspeed', 'airspeed', options);
+            var altimeter = $.flightIndicator('#altimeter', 'altimeter', options);
+            document.getElementById('cam_iframe').src = 'http://' + document.location.hostname + ':5000/video_feed';    
+
+            (function flight_data_loop() {
+                $.ajax({
+                    url : "flight_data.txt?_=" + new Date().getTime(),
+                    dataType: "text",
+                    success : function (data) {
+                        var flight_data = JSON.parse( data );
+                        $('#status').css('color', 'green');
+                        $('#status').html('Online');
+                        $('#raw_data').html(
+                            "Roll: " + flight_data.roll + "</br>" +
+                            "Pitch: " + flight_data.pitch + "</br>" +
+                            "Heading: " + flight_data.heading + "</br>" +
+                            "Vert Speed: " + flight_data.vario + "</br>" + 
+                            "Speed: " + flight_data.speed + "</br>" + 
+                            "Altitude: " + flight_data.altitude
+                            );                        
+                        attitude.setRoll(flight_data.roll);
+                        attitude.setPitch(flight_data.pitch); 
+                        heading.setHeading(flight_data.heading);      
+                        variometer.setVario(flight_data.vario);         
+                        airspeed.setAirSpeed(flight_data.speed);       
+                        altimeter.setAltitude(flight_data.altitude);
+                    },
+                    error: function(XMLHttpRequest, textStatus, errorThrown){
+                        $('#status').css('color', 'red');
+                        $('#status').html('Offline');                      
+                    },
+                    complete: function(){
+                        setTimeout(flight_data_loop, delay);
+                    }
+                });
+            })();  
+        });
+    </script>
+<body>
+    <h1>ARK: Expect us</h1>
+    <h2 id="status">Offline</h2>
+    <div>
+    <span id="attitude"></span>
+    <span id="heading"></span>
+    <span id="variometer"></span>
+    <span id="airspeed"></span>
+    <span id="altimeter"></span>
+    </div>
+    <div id="raw_data"></div>
+    <div id="cam_img">
+        <iframe id="cam_iframe" src="" height="380px" width="500"></iframe>
+    </div>
+</body>
+</html>

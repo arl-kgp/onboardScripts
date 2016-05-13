@@ -42,14 +42,16 @@ def arm_and_takeoff(aTargetAltitude):
         try:
             if _land==False:       
                 setz = aTargetAltitude   
-                setxvel = 1
                 currentz = vehicle.location.global_relative_frame.alt
-                x =vehicle.velocity[0]
-                PID = 0
+                PIDx = 0
+                PIDy = 0
                 errorz = setz - currentz
                 sum_errorx = 0
                 prev_errorx = 0
-                errorx = setx - x
+                errorx = 0
+                sum_errory = 0
+                prev_errory = 0
+                errory = 0
                 vehicle.armed=True 
                 #Break and return from function just below target altitude.        
                 if abs(errorz)>setz*0.1:
@@ -62,11 +64,16 @@ def arm_and_takeoff(aTargetAltitude):
                     print "Reached target altitude"
                 print " Altitude: ", currentz , "errorz:", errorz,"setz",setz
                 print "throttle",vehicle.channels['3']
-                PID = kpx*errorx + kix*sum_errorx + kdx*prev_errorx
-                vehicle.channels.overrides['1'] = PID*100 + 1500  
+                PIDx = kpx*errorx + kix*sum_errorx + kdx*prev_errorx
+                vehicle.channels.overrides['1'] = PIDx*100 + 1500  
                 sum_errorx + sum_errorx + errorx
                 prev_errorx = errorx
                 print "xvel",vehicle.velocity[0],"xthrottle",vehicle.channels.overrides['1']   
+                PIDy = kpy*errory + kiy*sum_errory + kdy*prev_errory
+                vehicle.channels.overrides['2'] = PIDy*100 + 1500  
+                sum_errory + sum_errory + errory
+                prev_errory = errory
+                print "yvel",vehicle.velocity[1],"ythrottle",vehicle.channels.overrides['2']   
                 time.sleep(1)
             else:
                 print "hi"
@@ -93,16 +100,21 @@ sitl = None
 
 
 #connection_string = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__Arduino_Mega_2560_740313032373515082D1-if00' #for serial
-connection_string = 'udp:127.0.0.1:14549'
+connection_string = 'udp:127.0.0.1:14550'
 
 # Connect to the Vehicle
 print 'Connecting to vehicle on: %s' % connection_string
 vehicle = connect(connection_string, wait_ready=True)   #for udp
 #vehicle = connect(connection_string, baud=115200, wait_ready=True)   #for serial
-print "kp,ki,kd xvel"
+print "kpx,kix,kdx"
 kpx = float(input())
 kix = float(input())
 kdx = float(input())
+print "kpy,kiy,kdy"
+kpy = float(input())
+kiy = float(input())
+kdy = float(input())
+
 print _land
 
 arm_and_takeoff(1)

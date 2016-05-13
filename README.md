@@ -1,4 +1,4 @@
-#Odroid Scripts
+#Onboard Scripts
 
 Dependencies: mav-proxy, drone-kit, tower-web
 

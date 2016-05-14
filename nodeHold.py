@@ -5,9 +5,12 @@ from pymavlink import mavutil
 import time
 import argparse 
 
+#Global Variables
+#TODO: Remove them from global
 _land = False
 fx = fy = 0
 group_distance = 500
+vehicle = None
 
 def arrange_points(pt1, pt2):
     p1 = p2 = 0
@@ -134,8 +137,9 @@ def nearestNode(points):
             min_distance = present_dist
     return (x_nearest, y_nearest)
 
-def arm_and_takeoff(aTargetAltitude):
-    global _land   
+
+def takeoff((kpx, kix, kdx, kpy, kiy, kdy)):
+    global vehicle    
     """
     Arms vehicle and fly to aTargetAltitude.
     """
@@ -157,6 +161,60 @@ def arm_and_takeoff(aTargetAltitude):
         time.sleep(1)
    
     print "Taking off!"
+    while_condition = True
+    while while_condition:
+        try:
+            if _land==False:       
+                setz = 1.0 
+                currentz = vehicle.location.global_relative_frame.alt
+                errorz = setz - currentz
+                vehicle.armed=True 
+                #Break and return from function just below target altitude.        
+                if abs(errorz)>setz*0.1:
+                    if errorz<0 :
+                        vehicle.channels.overrides['3'] = 1340
+                    elif errorz>0 :
+                        vehicle.channels.overrides['3'] = 1660
+                else:
+                    vehicle.channels.overrides['3'] = 1500
+                    print "Reached target altitude"
+                    while_condition = False
+                print " Altitude: ", currentz , "errorz:", errorz,"setz",setz
+                print "throttle",vehicle.channels['3'] 
+            else:
+                print "Keyboard Interrupt! Setting throttle 0"
+                vehicle.channels.overrides['3']=0
+                exit()
+             
+        except KeyboardInterrupt:
+            vehicle.channels.overrides['3']=0    
+
+def arm_and_takeoff(aTargetAltitude, (kpx, kix, kdx, kpy, kiy, kdy)):
+    global _land
+    global vehicle  
+    
+    # Arms vehicle and fly to aTargetAltitude.
+    
+
+    #print "Basic pre-arm checks"
+    # Don't try to arm until autopilot is ready
+    # while not vehicle.is_armable:
+    #     print " Waiting for vehicle to initialise..."
+    #     time.sleep(1)
+
+        
+    '''print "Arming motors"
+    # Copter should arm in GUIDED mode
+    vehicle.mode = VehicleMode("ALT_HOLD")
+    vehicle.armed=True 
+    # Confirm vehicle armed before attempting to take off
+    while not vehicle.armed:      
+        print " Waiting for arming..."
+        time.sleep(1)   
+    print "Taking off!"'''
+
+    # Strating Camera
+    print "Starting Camera"
     cap = cv2.VideoCapture(0)
     cv2.namedWindow('Output')
 
@@ -231,6 +289,7 @@ def arm_and_takeoff(aTargetAltitude):
             cv2.circle(rslt, (x_nearest, y_nearest), 10, (0, 255, 255), thickness=1, lineType=8, shift=0)
             cv2.imshow('Output', rslt)
 
+            print "dx: " + str(errorx)  + " dy: " + str(errory)
             # PID controller
             if _land==False:       
                 setz = aTargetAltitude   
@@ -240,10 +299,8 @@ def arm_and_takeoff(aTargetAltitude):
                 errorz = setz - currentz
                 sum_errorx = 0
                 prev_errorx = 0
-                errorx = 0
                 sum_errory = 0
                 prev_errory = 0
-                errory = 0
                 vehicle.armed=True 
                 #Break and return from function just below target altitude.        
                 if abs(errorz)>setz*0.1:
@@ -257,15 +314,15 @@ def arm_and_takeoff(aTargetAltitude):
                 print " Altitude: ", currentz , "errorz:", errorz,"setz",setz
                 print "throttle",vehicle.channels['3']
                 PIDx = kpx*errorx + kix*sum_errorx + kdx*prev_errorx
-                vehicle.channels.overrides['1'] = PIDx*100 + 1500  
+                vehicle.channels.overrides['1'] = int(PIDx + 1500)  
                 sum_errorx + sum_errorx + errorx
                 prev_errorx = errorx
-                print "xvel",vehicle.velocity[0],"xthrottle",vehicle.channels.overrides['1']   
+                print "errorx",errorx,"xthrottle",vehicle.channels['1']   
                 PIDy = kpy*errory + kiy*sum_errory + kdy*prev_errory
-                vehicle.channels.overrides['2'] = PIDy*100 + 1500  
+                vehicle.channels.overrides['2'] = int(PIDy + 1500)  
                 sum_errory + sum_errory + errory
                 prev_errory = errory
-                print "yvel",vehicle.velocity[1],"ythrottle",vehicle.channels.overrides['2']
+                print "errory",errory,"ythrottle",vehicle.channels['2']
             else:
                 print "Keyboard Interrupt! Setting throttle 0"
                 vehicle.channels.overrides['3']=0
@@ -282,6 +339,7 @@ def arm_and_takeoff(aTargetAltitude):
 
 
 def main():
+    global vehicle
     parser = argparse.ArgumentParser(description='Commands vehicle using vehicle.simple_goto.')
     parser.add_argument('--connect', 
                        help="Vehicle connection target string. If not specified, SITL automatically started and used.")
@@ -307,9 +365,11 @@ def main():
     kiy = float(input())
     kdy = float(input())
 
-    print _land
+    _pid_values = (kpx, kix, kdx, kpy, kiy, kdy)
 
-    arm_and_takeoff(1)
+    print _land
+    takeoff(_pid_values)
+    arm_and_takeoff(1, _pid_values)
         
 
 main()

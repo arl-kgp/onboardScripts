@@ -1,6 +1,11 @@
 import cv2
 import numpy as np
+from dronekit import connect, VehicleMode, LocationGlobalRelative
+from pymavlink import mavutil
+import time
+import argparse 
 
+_land = False
 fx = fy = 0
 group_distance = 500
 
@@ -129,71 +134,182 @@ def nearestNode(points):
             min_distance = present_dist
     return (x_nearest, y_nearest)
 
+def arm_and_takeoff(aTargetAltitude):
+    global _land   
+    """
+    Arms vehicle and fly to aTargetAltitude.
+    """
 
-def main():
-    cap = cv2.VideoCapture("out1.AVI")
-    cv2.namedWindow('Control')
+    print "Basic pre-arm checks"
+    # Don't try to arm until autopilot is ready
+    '''while not vehicle.is_armable:
+        print " Waiting for vehicle to initialise..."
+        time.sleep(1)'''
+
+        
+    print "Arming motors"
+    # Copter should arm in GUIDED mode
+    vehicle.mode = VehicleMode("ALT_HOLD")
+    vehicle.armed=True 
+    # Confirm vehicle armed before attempting to take off
+    while not vehicle.armed:      
+        print " Waiting for arming..."
+        time.sleep(1)
+   
+    print "Taking off!"
+    cap = cv2.VideoCapture(0)
+    cv2.namedWindow('Output')
 
     while True:
-        global fx
-        global fy
-        group_lines = []
-        ret, pic = cap.read()
         try:
-            fy, fx, channels = pic.shape
-        except:
-            continue
-        img = cv2.cvtColor(pic, cv2.COLOR_BGR2YCR_CB)
-        pic_bin = cv2.inRange(img, (99, 132, 81), (162, 164, 109))
-        pic_bin = cv2.Canny(pic_bin, 50, 200, 3)
-        rslt = cv2.cvtColor(pic_bin, cv2.COLOR_GRAY2BGR)
-        lines = cv2.HoughLines(pic_bin, 1, np.pi / 180, 100)
-        if np.size(lines) <= 1:
-            continue
-        for rho, theta in lines[0]:
-            pt1, pt2 = line_points((rho, theta))
-            rho1, theta1 = (rho, theta)
-            meanRho = rho1
-            meanTheta = theta1
-            counter = 1
-            flag_write = 0
+            global fx
+            global fy
+            group_lines = []
+            ret, pic = cap.read()
+            try:
+                fy, fx, channels = pic.shape
+            except:
+                continue
+            img = cv2.cvtColor(pic, cv2.COLOR_BGR2YCR_CB)
+            pic_bin = cv2.inRange(img, (99, 132, 81), (162, 164, 109))
+            pic_bin = cv2.Canny(pic_bin, 50, 200, 3)
+            rslt = cv2.cvtColor(pic_bin, cv2.COLOR_GRAY2BGR)
+            lines = cv2.HoughLines(pic_bin, 1, np.pi / 180, 100)
+            if np.size(lines) <= 1:
+                continue
+
+            # Group Lines
+            for rho, theta in lines[0]:
+                pt1, pt2 = line_points((rho, theta))
+                rho1, theta1 = (rho, theta)
+                meanRho = rho1
+                meanTheta = theta1
+                counter = 1
+                flag_write = 0
+                for j in range(0, len(group_lines)):
+                    pt3, pt4 = line_points(group_lines[j])
+                    rho2, theta2 = group_lines[j]
+                    if (np.linalg.norm(dist(pt1, pt3)) + np.linalg.norm(dist(pt2, pt4))) < group_distance:
+                        flag_write = 1
+                        meanRho += rho2
+                        meanTheta += theta2
+                        counter += 1
+                if flag_write == 0:
+                    group_lines.append((meanRho / counter, meanTheta / counter))
+
+            # Display grouped Lines
             for j in range(0, len(group_lines)):
-                pt3, pt4 = line_points(group_lines[j])
-                rho2, theta2 = group_lines[j]
-                if (np.linalg.norm(dist(pt1, pt3)) + np.linalg.norm(dist(pt2, pt4))) < group_distance:
-                    flag_write = 1
-                    meanRho += rho2
-                    meanTheta += theta2
-                    counter += 1
-            if flag_write == 0:
-                group_lines.append((meanRho / counter, meanTheta / counter))
+                rho, theta = group_lines[j]
+                a = np.cos(theta)
+                b = np.sin(theta)
+                x0 = a * rho
+                y0 = b * rho
+                x1 = int(x0 + 2000 * (-b))
+                y1 = int(y0 + 2000 * (a))
+                x2 = int(x0 - 2000 * (-b))
+                y2 = int(y0 - 2000 * (a))
+                cv2.line(rslt, (x1, y1), (x2, y2), (0, 0, 255), 2)
 
-        for j in range(0, len(group_lines)):
-            rho, theta = group_lines[j]
-            a = np.cos(theta)
-            b = np.sin(theta)
-            x0 = a * rho
-            y0 = b * rho
-            x1 = int(x0 + 2000 * (-b))
-            y1 = int(y0 + 2000 * (a))
-            x2 = int(x0 - 2000 * (-b))
-            y2 = int(y0 - 2000 * (a))
-            cv2.line(rslt, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            # Find line intersections
+            intersection_Points = []
+            for i in range(0, len(group_lines)):
+                for j in range(i, len(group_lines)):
+                    x, y = line_intersection(group_lines[i], group_lines[j])
+                    if x <= fx and y <= fy:
+                        try:
+                            intersection_Points.append((int(x), int(y)))
+                            cv2.circle(rslt, (int(x), int(y)), 10, (255, 255, 255), thickness=1, lineType=8, shift=0)
+                        except:
+                            pass
 
-        intersection_Points = []
-        for i in range(0, len(group_lines)):
-            for j in range(i, len(group_lines)):
-                x, y = line_intersection(group_lines[i], group_lines[j])
-                if x <= fx and y <= fy:
-                    try:
-                        intersection_Points.append((int(x), int(y)))
-                        cv2.circle(rslt, (int(x), int(y)), 10, (255, 255, 255), thickness=1, lineType=8, shift=0)
-                    except:
-                        pass
+            # Find nearest intersection
+            x_nearest, y_nearest = nearestNode(intersection_Points)
 
-        x_nearest, y_nearest = nearestNode(intersection_Points)
-        cv2.circle(rslt, (x_nearest, y_nearest), 10, (0, 255, 255), thickness=1, lineType=8, shift=0)
-        cv2.imshow('Control', rslt)
+            # Calculate PID error
+            errorx = x_nearest - (fx / 2)
+            errory = (fy / 2) - y_nearest
+            cv2.circle(rslt, (x_nearest, y_nearest), 10, (0, 255, 255), thickness=1, lineType=8, shift=0)
+            cv2.imshow('Output', rslt)
+
+            # PID controller
+            if _land==False:       
+                setz = aTargetAltitude   
+                currentz = vehicle.location.global_relative_frame.alt
+                PIDx = 0
+                PIDy = 0
+                errorz = setz - currentz
+                sum_errorx = 0
+                prev_errorx = 0
+                errorx = 0
+                sum_errory = 0
+                prev_errory = 0
+                errory = 0
+                vehicle.armed=True 
+                #Break and return from function just below target altitude.        
+                if abs(errorz)>setz*0.1:
+                    if errorz<0 :
+                        vehicle.channels.overrides['3'] = 1340
+                    elif errorz>0 :
+                        vehicle.channels.overrides['3'] = 1660
+                else:
+                    vehicle.channels.overrides['3'] = 1500
+                    print "Reached target altitude"
+                print " Altitude: ", currentz , "errorz:", errorz,"setz",setz
+                print "throttle",vehicle.channels['3']
+                PIDx = kpx*errorx + kix*sum_errorx + kdx*prev_errorx
+                vehicle.channels.overrides['1'] = PIDx*100 + 1500  
+                sum_errorx + sum_errorx + errorx
+                prev_errorx = errorx
+                print "xvel",vehicle.velocity[0],"xthrottle",vehicle.channels.overrides['1']   
+                PIDy = kpy*errory + kiy*sum_errory + kdy*prev_errory
+                vehicle.channels.overrides['2'] = PIDy*100 + 1500  
+                sum_errory + sum_errory + errory
+                prev_errory = errory
+                print "yvel",vehicle.velocity[1],"ythrottle",vehicle.channels.overrides['2']
+            else:
+                print "Keyboard Interrupt! Setting throttle 0"
+                vehicle.channels.overrides['3']=0
+                exit()
+             
+        except KeyboardInterrupt:
+            vehicle.channels.overrides['3']=0
+           # vehicle.mode = VehicleMode("LAND")            
+           # if _land:
+            #    vehicle.channels.overrides['3']=1000
+            #    exit()
+            _land = True
         cv2.waitKey(33)
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Commands vehicle using vehicle.simple_goto.')
+    parser.add_argument('--connect', 
+                       help="Vehicle connection target string. If not specified, SITL automatically started and used.")
+    args = parser.parse_args()
+
+    connection_string = args.connect
+    sitl = None
+
+    #connection_string = '/dev/serial/by-id/usb-Arduino__www.arduino.cc__Arduino_Mega_2560_740313032373515082D1-if00' #for serial
+    connection_string = 'udp:127.0.0.1:14550'
+
+    # Connect to the Vehicle
+    print 'Connecting to vehicle on: %s' % connection_string
+    vehicle = connect(connection_string, wait_ready=True)   #for udp
+    #vehicle = connect(connection_string, baud=115200, wait_ready=True)   #for serial
+
+    print "kpx,kix,kdx"
+    kpx = float(input())
+    kix = float(input())
+    kdx = float(input())
+    print "kpy,kiy,kdy"
+    kpy = float(input())
+    kiy = float(input())
+    kdy = float(input())
+
+    print _land
+
+    arm_and_takeoff(1)
+        
 
 main()

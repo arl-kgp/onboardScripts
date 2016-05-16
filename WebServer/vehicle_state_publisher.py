@@ -1,5 +1,5 @@
 from dronekit import connect
-from time import sleep
+import time
 import argparse
 import json
 
@@ -33,20 +33,25 @@ vehicle = connect(connection_string, wait_ready=True)
 #print "Connecting to vehicle on: '/dev/serial/by-id/usb-Arduino__www.arduino.cc__Arduino_Mega_2560_740313032373515082D1-if00'"
 #vehicle = connect('192.168.43.57:14550',wait_ready=True)
 
-fo = open("data/flight_data.txt", "w+")
 
 while True:
     # Get some vehicle attributes (state)
+    fo = open("data/flight_data.txt", "w")
     data = {}
-    data["roll"] = vehicle.attitude.roll
-    data["pitch"] = vehicle.attitude.pitch
+    data["roll"] = vehicle.attitude.roll*180/3.14
+    data["pitch"] = vehicle.attitude.pitch*180/3.14
     data["heading"] = vehicle.heading
     data["vario"] = 0
     data["speed"] = vehicle.groundspeed / 100
-    data["altitude"] = vehicle.location.global_relative_frame.alt
+    alt = vehicle.location.global_relative_frame.alt*1000
+    if alt < 0:
+        data["altitude"] = 0
+    else:
+        data["altitude"] = vehicle.location.global_relative_frame.alt*1000
 
     fo.write(json.dumps(data))
-    sleep(1)
+    fo.close()
+    time.sleep(100.0 / 1000.0)
 
 # Close vehicle object before exiting script
 vehicle.close()

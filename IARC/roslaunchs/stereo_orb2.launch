@@ -1,0 +1,7 @@
+<launch>
+  <node name="orb" pkg="ORB_SLAM2" type="Stereo" output="screen" args="/home/manash/Codes/downloaded/ORB_SLAM2/Vocabulary/ORBvoc.txt /home/manash/Codes/downloaded/ORB_SLAM2/Examples/Stereo/Ark_stereo.yaml true">
+    <remap from="/camera/left/image_raw" to="/camera_left/image_raw"/>
+    <remap from="/camera/right/image_raw" to="/camera_right/image_raw"/>
+    <!--<remap from="/camera/image_raw" to="/camera/image_rect_color"/>-->
+  </node>
+</launch>

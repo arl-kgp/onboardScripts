@@ -1,0 +1,7 @@
+<launch>
+  <node name="orb" pkg="ORB_SLAM2" type="Mono" output="screen" args="/home/manash/Codes/downloaded/ORB_SLAM2/Vocabulary/ORBvoc.txt /home/manash/Codes/downloaded/ORB_SLAM2/Examples/Monocular/logi_canary.yaml">
+    <!--<remap from="/camera/image_raw/compressed" to="/erlecopter/front/image_front_raw/compressed"/>-->
+    <!--<remap from="/camera/image_raw" to="/camera/image_rect_color"/>-->
+    <remap from="/camera/image_raw/compressed" to="/usb_cam0/image_raw/compressed"/>
+ </node>
+</launch>

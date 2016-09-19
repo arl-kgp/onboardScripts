@@ -1,0 +1,2 @@
+rosrun tf static_transform_publisher 0 0 0 0 0 0 1 base_link fcu 10
+#rosrun tf static_transform_publisher 0 0 0 0 0 0 1 camera_odom odom 10

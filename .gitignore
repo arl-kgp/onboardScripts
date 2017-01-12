@@ -1,2 +1,5 @@
 *~
 WebServer/data/flight_data.txt
+mav.parm
+mav.tlog
+mav.tlog.raw

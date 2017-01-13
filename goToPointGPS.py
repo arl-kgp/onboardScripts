@@ -3,10 +3,15 @@ import time
 import math
 import argparse
 
-P1 = [22.31890386, 87.30263576, 2]
-P2 = [22.31884598, 87.3024447, 2]
+P1 = [22.31875388,87.30224211, 2]
+P2 = [22.31889827,87.30233798, 2]
+P3 = [22.31881448,87.30250068,2]
+P4 = [22.31895938,87.30262122,2]
+P5 = [22.31887949,87.30283219,2]
+P6 = [22.31892094,87.30295963,2]
 
-gps_points = [P1, P2]
+
+gps_points = [P1, P2,P3 , P4,P5,P6]
 
 
 # Set up option parsing to get connection string
@@ -88,13 +93,16 @@ def main():
     vehicle.airspeed = 1
 
     for gps_point in gps_points:
+    	vehicle.mode = VehicleMode("GUIDED")
         print "Going towards next point (groundspeed set to 1 m/s) ..."
         point1 = LocationGlobalRelative(gps_point[0], gps_point[1], gps_point[2])
         vehicle.simple_goto(point1, groundspeed=1)
+        dist = measure(vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, gps_point[0], gps_point[1])
         # printing the distance to go in meters
-        while measure(vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, gps_point[0], gps_point[1])>1 :
-            print measure(vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, gps_point[0], gps_point[1])
-            time.sleep(3)
+        while dist>1 :
+            print dist
+            time.sleep(1)
+            dist = measure(vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, gps_point[0], gps_point[1])
         print "reached point"
 
     print "landing"

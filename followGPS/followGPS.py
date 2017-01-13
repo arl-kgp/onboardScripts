@@ -117,13 +117,12 @@ def main():
         else:
             print "Reached"
             time.sleep(3)
-
-    #print "landing"
-    #vehicle.mode = VehicleMode("LAND")
+			print "landing"
+			vehicle.mode = VehicleMode("LAND")
 
     # Close vehicle object before exiting script
-    #print "Close vehicle object"
-    #vehicle.close()
+    		print "Close vehicle object"
+    		vehicle.close()
 
     # Shut down simulator if it was started.
     #if sitl is not None:

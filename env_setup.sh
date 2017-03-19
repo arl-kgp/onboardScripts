@@ -6,4 +6,4 @@ sudo -E pip install pymavlink==2.0.6 &&
 sudo -E pip install mavproxy==1.5.0 &&
 sudo -E pip install dronekit==2.9.0 &&
 sudo -E pip install dronekit-sitl==3.2.0 -UI &&
-sudo -E pip install Flask
+sudo -E pip install Flasky

@@ -2,26 +2,21 @@ from dronekit import connect, VehicleMode, LocationGlobalRelative
 import time
 import math
 import argparse
-import zmq
 import sys
 import socket
 from threading import *
 
-#P1 = [22.31890386, 87.30263576, 2]
-#P2 = [22.31884598, 87.3024447, 2]
-# Connect to the Vehicle
 
-#gps_points = [P1, P2]
-#gps_point = [22.31890386, 87.30263576]
-#const_altitude = 2
 connected = False
-# Set up option parsing to get connection string
+# Set up socket connection for recieving and sending data to the server
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#Bind to any incoming request at port 8000
 host = "0.0.0.0"
 port = 8000
 print (host)
 print (port)
 serversocket.bind((host, port))
+#Thread class to recieve data and implement methods
 class client(Thread):
     def __init__(self, socket, address):
         Thread.__init__(self)
@@ -41,14 +36,15 @@ class client(Thread):
 				GotoModeB(gps_points)
             else :
                 ModeLand()
-            #self.sock.send(str(vehicle.location.global_relative_frame.lat)+','+str(vehicle.location.global_relative_frame.lon)+'\n')
-
+            self.sock.send(str(vehicle.location.global_relative_frame.lat)+','+str(vehicle.location.global_relative_frame.lon)+'\n')
+#function to send data / GPS location of quad to the mobile client
 def sent(clientsocket):
 	while True:
 		clientsocket.send(str(vehicle.location.global_relative_frame.lat)+','+str(vehicle.location.global_relative_frame.lon)+'\n')
 		time.sleep(0.1)
         #print 'Sending !\n'
 
+# Set up option parsing to get connection string
 parser = argparse.ArgumentParser(description='Commands vehicle using vehicle.simple_goto.')
 parser.add_argument('--connect',
                     help="Vehicle connection target string. If not specified, SITL automatically started and used.")
@@ -114,20 +110,20 @@ def measure(lat1, lon1, lat2, lon2):  # generally used geo measurement function
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     d = R * c
     return d * 1000  # meters
-
+#Single point goto mode
 def GotoModeA(gps_point):
     height = abs(vehicle.location.global_relative_frame.alt - float(gps_point[2]))
     dist = measure(vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, gps_point[0], gps_point[1])
     print "Going towards next point (groundspeed set to 1 m/s) ..."
     while (dist > 1 or height > 0.3)  :
         point1 = LocationGlobalRelative(float(gps_point[0]), float(gps_point[1]), float(gps_point[2]))
-        vehicle.simple_goto(point1, groundspeed=5) 
+        vehicle.simple_goto(point1, groundspeed=1) #Set quad speed 
         # printing the distance to go in meters
         dist = measure(vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, gps_point[0], gps_point[1])
 	print dist
-        time.sleep(1)
+        time.sleep(1)	#seconds
 
-
+#Multi point following or path following mode
 def GotoModeB(gps_points):
 	for gps in gps_points:
 		gps_point = gps.split(',')
@@ -141,7 +137,7 @@ def GotoModeB(gps_points):
             dist = measure(vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, gps_point[0], gps_point[1])
             print dist
             time.sleep(1)
-
+#Land mode
 def ModeLand():
     print 'Landing'
     vehicle.mode = VehicleMode("LAND")
